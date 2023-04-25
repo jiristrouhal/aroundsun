@@ -61,6 +61,7 @@ vessel, = ax.plot(*r,'.',color='r')
 vessel_vel, = ax.plot([r[0],r[0]+VESSEL_SCALE*d[0]], [r[1],r[1]+VESSEL_SCALE*d[1]],color='r')
 THRUST_MAG = 50
 STRONG_THRUST_MAG = 10*THRUST_MAG
+WEAK_THRUST_MAG = 0.1*THRUST_MAG
 
 
 trajectory:List[List[float]] = [[], []]
@@ -254,7 +255,7 @@ def update_position():
     root.after(dt_ms, update_position)
 
 
-PREDICTED_PERIOD = 5
+PREDICTED_PERIOD = 4
 DRAW_EVERY_NTH_TRAJECTORY_POINT = 5
 def predict_trajectory():
     global time, r, dt_s, trajectory
@@ -345,6 +346,16 @@ def thrust_backwards_strong(event):
     if thrust > 0: thrust = 0
     thrust = -STRONG_THRUST_MAG
 
+def thrust_forwards_weak(event):
+    global thrust 
+    if thrust < 0: thrust = 0
+    thrust = WEAK_THRUST_MAG
+
+def thrust_backwards_weak(event):
+    global thrust 
+    if thrust > 0: thrust = 0
+    thrust = -WEAK_THRUST_MAG
+
 D_ANGLE = math.pi/40
 COS_D_ANGLE = math.cos(D_ANGLE)
 SIN_D_ANGLE = math.sin(D_ANGLE)
@@ -431,7 +442,8 @@ canvas_widget.bind("<Up>",thrust_forwards)
 canvas_widget.bind("<Down>",thrust_backwards)
 canvas_widget.bind("<Shift-Up>",thrust_forwards_strong)
 canvas_widget.bind("<Shift-Down>",thrust_backwards_strong)
-
+canvas_widget.bind("<Control-Up>",thrust_forwards_weak)
+canvas_widget.bind("<Control-Down>",thrust_backwards_weak)
 canvas_widget.bind("<Left>",turn_left)
 canvas_widget.bind("<Right>",turn_right)
 
