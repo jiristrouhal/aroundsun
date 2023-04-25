@@ -62,6 +62,11 @@ vessel_vel, = ax.plot([r[0],r[0]+VESSEL_SCALE*d[0]], [r[1],r[1]+VESSEL_SCALE*d[1
 THRUST_MAG = 50
 STRONG_THRUST_MAG = 10*THRUST_MAG
 
+
+trajectory:List[List[float]] = [[], []]
+trajectory_image, = ax.plot(*trajectory, '-', color="grey", linewidth=0.5)
+
+
 sun, = ax.plot(*sun_position,'o',color=(1,1,0),markersize=marker_size(MS/50000))
 ax.set_xlim(xl, xh)
 ax.set_ylim(yl, yh)
@@ -74,7 +79,6 @@ canvas.draw()
 
 CONSUMED_FUEL_LABEL = "Consumed fuel: "
 fuel_printout = tk.Label(root,text=CONSUMED_FUEL_LABEL)
-
 
 
 @dataclasses.dataclass
@@ -194,7 +198,7 @@ def update_position():
 
         du = 0.0
         if thrust!=0: 
-            fuel += thrust/THRUST_MAG*dt_scaled/DT0
+            fuel += abs(thrust)/THRUST_MAG*dt_scaled/DT0
             fuel_printout.config(text=CONSUMED_FUEL_LABEL+f"{fuel:.0f}")
             du = thrust*dt_scaled
 
@@ -248,6 +252,56 @@ def update_position():
 
     thrust = 0
     root.after(dt_ms, update_position)
+
+
+PREDICTED_PERIOD = 5
+DRAW_EVERY_NTH_TRAJECTORY_POINT = 5
+def predict_trajectory():
+    global time, r, dt_s, trajectory
+
+    trajectory = [[],[]]
+
+    tt = time
+    dtt = dt_s
+    tt_end = time + PREDICTED_PERIOD
+    rr = r.copy()
+    uu = u.copy()
+
+    j = 0
+    while tt<tt_end:
+        k = G_MS*(rr[0]*rr[0] + rr[1]*rr[1])**(-1.5)
+        a_sun = [-k*rr[0], -k*rr[1]]
+
+        smallest_dist_from_planet_squared = -1.0
+        closest_planet_id = -1
+        for i in range(len(planets)):
+            planet_position = planets[i].position(tt)
+            dist_from_planet_squared = vec_mag2([rr[0]-planet_position[0], rr[1]-planet_position[1]])
+            if dist_from_planet_squared<smallest_dist_from_planet_squared or smallest_dist_from_planet_squared==-1.0:
+                closest_planet_id = i
+                smallest_dist_from_planet_squared = dist_from_planet_squared
+
+        p_position = planets[closest_planet_id].position(tt)
+        r_planet = [rr[0] - p_position[0], rr[1] - p_position[1]]
+        k = G*planets[closest_planet_id].mass*smallest_dist_from_planet_squared**(-1.5)
+        a = [-k*r_planet[0], -k*r_planet[1]]
+
+        tt += dtt
+        j += 1
+
+        uu[0] += (a[0] + a_sun[0])*dtt
+        uu[1] += (a[1] + a_sun[1])*dtt
+
+        rr[0] += uu[0]*dtt
+        rr[1] += uu[1]*dtt
+
+        if j%DRAW_EVERY_NTH_TRAJECTORY_POINT==0:
+            trajectory[0].append(rr[0])
+            trajectory[1].append(rr[1])
+
+    trajectory_image.set_data(*trajectory)
+
+    root.after(250, predict_trajectory)
 
 
 def redraw():
@@ -409,6 +463,7 @@ reset_button.pack()
 update_position()
 redraw()
 track()
+predict_trajectory()
 
 def main():
     global root
