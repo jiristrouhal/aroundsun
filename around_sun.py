@@ -59,6 +59,9 @@ def marker_size(size:float)->float:
 ax:Axes = fig.add_subplot()
 vessel, = ax.plot(*r,'.',color='r')
 vessel_vel, = ax.plot([r[0],r[0]+VESSEL_SCALE*d[0]], [r[1],r[1]+VESSEL_SCALE*d[1]],color='r')
+THRUST_MAG = 50
+STRONG_THRUST_MAG = 10*THRUST_MAG
+
 sun, = ax.plot(*sun_position,'o',color=(1,1,0),markersize=marker_size(MS/50000))
 ax.set_xlim(xl, xh)
 ax.set_ylim(yl, yh)
@@ -85,7 +88,7 @@ class Planet:
         self.ang_velocity = math.sqrt(MS*G/abs(self.dist)**3)
 
         self.period = 2*math.pi/self.ang_velocity
-        self.n_steps = int(self.period/dt_s)
+        self.n_steps = 2*int(self.period/dt_s)
 
         self._positions:List[Tuple[float,float]] = list()
         self.__calculate_positions()
@@ -109,7 +112,7 @@ class Planet:
         assert(len(self._positions)==self.n_steps)
 
 
-planets = [Planet(2,0,5000,'#88F'), Planet(5,-math.pi,1000,'#D60'), Planet(7,-math.pi/2,20000,'#5F0')]
+planets = [Planet(2,0,5000,'#88F'), Planet(5,-math.pi,1000,'#D60'), Planet(7,-math.pi/2,20000,'#9F3'), Planet(10,-math.pi/2,1000,'#AAA')]
 
 
 planet_images:List[Line2D] = []
@@ -122,46 +125,55 @@ d_locked = False
 TURNING_LOCKED = "Turning LOCKED"
 direction_locked_label = tk.Label(root,text="")
 
-N = 1000
-DT0 = DT_S_0/N
+
+DT0 = DT_S_0
 dt = DT0
 kt = 0
 time_speed_printout = tk.Label(root,text="")
-
-
-MAX_SPEEDUP = 5
-MAX_SLOWDOWN = 6
-def speedup_time(event):
-    global kt, dt
-    if kt<MAX_SPEEDUP: kt += 1
-    dt = DT0 * 2**kt 
-    set_time_printout()
-
-def slowdown_time(event):
-    global kt, dt
-    if kt>-MAX_SLOWDOWN:
-        kt -= 1
-    dt = DT0 * 2**kt
-    set_time_printout()
-
-def set_time_printout():
-    global kt
-    message = ""
-    if kt>0: 
-        message = f"Time running {2**kt}× FASTER"
-    elif kt<0: 
-        message = f"Time running {2**(-kt)}× SLOWER"
-    time_speed_printout.config(text=message)
 
 
 paused = False
 def pause(event):
     global paused
     paused = not paused
+    set_time_printout()
+
+MAX_SPEEDUP = 7
+MAX_SLOWDOWN = 4
+def speedup_time(event):
+    global kt, dt, paused
+    if paused: return 
+    if kt<MAX_SPEEDUP: kt += 1
+    dt = DT0 * 2**kt 
+    set_time_printout()
+
+def slowdown_time(event):
+    global kt, dt, paused
+    if paused: return 
+    if kt>-MAX_SLOWDOWN:
+        kt -= 1
+    dt = DT0 * 2**kt
+    set_time_printout()
+
+def set_time_printout():
+    global kt, paused
+    message = ""
+    if paused:
+        message = "Game PAUSED"
+    elif kt>0: 
+        message = f"Time running {2**kt}× FASTER"
+    elif kt<0: 
+        message = f"Time running {2**(-kt)}× SLOWER"
+    time_speed_printout.config(text=message)
+
 
 
 def vec_mag2(vec:List[float]|Tuple[float,float])->float:
     return vec[0]*vec[0] + vec[1]*vec[1]
+
+
+track_planet:bool = False
+tracked_planet_id:int = -1
 
 
 def update_position():
@@ -171,46 +183,56 @@ def update_position():
     if paused: 
         root.after(dt_ms, update_position)
         return 
-
-    k = G_MS*(r[0]*r[0] + r[1]*r[1])**(-1.5)
-    a_sun = [-k*r[0], -k*r[1]]
-
-    du = 0.0
-    if thrust!=0: 
-        fuel += dt/DT0
-        fuel_printout.config(text=CONSUMED_FUEL_LABEL+f"{fuel:.0f}")
-        du = thrust*dt
-
-    smallest_dist_from_planet_squared = -1.0
-    closest_planet_id = -1
-    for i in range(len(planets)):
-        planet_position = planets[i].position(time)
-        dist_from_planet_squared = vec_mag2([r[0]-planet_position[0], r[1]-planet_position[1]])
-        if dist_from_planet_squared<smallest_dist_from_planet_squared or smallest_dist_from_planet_squared==-1.0:
-            closest_planet_id = i
-            smallest_dist_from_planet_squared = dist_from_planet_squared
-
-    p_position = planets[closest_planet_id].position(time)
-    r_planet = [r[0] - p_position[0], r[1] - p_position[1]]
-    k = G*planets[closest_planet_id].mass*smallest_dist_from_planet_squared**(-1.5)
-    a = [-k*r_planet[0], -k*r_planet[1]]
     
-    for _ in range(N):
+    t_scaling_factor = max(1,2**kt)
+    dt_scaled = dt/t_scaling_factor
 
-        u[0] += (a[0] + a_sun[0])*dt
-        u[1] += (a[1] + a_sun[1])*dt
+    for _ in range(t_scaling_factor):
+
+        k = G_MS*(r[0]*r[0] + r[1]*r[1])**(-1.5)
+        a_sun = [-k*r[0], -k*r[1]]
+
+        du = 0.0
+        if thrust!=0: 
+            fuel += thrust/THRUST_MAG*dt_scaled/DT0
+            fuel_printout.config(text=CONSUMED_FUEL_LABEL+f"{fuel:.0f}")
+            du = thrust*dt_scaled
+
+        smallest_dist_from_planet_squared = -1.0
+        closest_planet_id = -1
+        for i in range(len(planets)):
+            planet_position = planets[i].position(time)
+            dist_from_planet_squared = vec_mag2([r[0]-planet_position[0], r[1]-planet_position[1]])
+            if dist_from_planet_squared<smallest_dist_from_planet_squared or smallest_dist_from_planet_squared==-1.0:
+                closest_planet_id = i
+                smallest_dist_from_planet_squared = dist_from_planet_squared
+
+        p_position = planets[closest_planet_id].position(time)
+        r_planet = [r[0] - p_position[0], r[1] - p_position[1]]
+        k = G*planets[closest_planet_id].mass*smallest_dist_from_planet_squared**(-1.5)
+        a = [-k*r_planet[0], -k*r_planet[1]]
+
+
+        a_sun_mag2 = vec_mag2(a_sun)
+        a_planet_mag2 = vec_mag2(a)
+
+        global tracked_planet_id
+        if a_planet_mag2>a_sun_mag2: 
+            tracked_planet_id = closest_planet_id
+        else:
+            tracked_planet_id = -1
+        
+        u[0] += (a[0] + a_sun[0])*dt_scaled
+        u[1] += (a[1] + a_sun[1])*dt_scaled
 
         if thrust!=0: 
             u[0] += d[0]*du
             u[1] += d[1]*du
 
-        r[0] += u[0]*dt
-        r[1] += u[1]*dt
+        r[0] += u[0]*dt_scaled
+        r[1] += u[1]*dt_scaled
 
         if d_locked:
-            a_sun_mag2 = vec_mag2(a_sun)
-            a_planet_mag2 = vec_mag2(a)
-
             if a_planet_mag2>a_sun_mag2: 
                 up = planets[closest_planet_id].velocity(time)
                 ur = [u[0]-up[0], u[1]-up[1]]
@@ -222,7 +244,7 @@ def update_position():
                 d[0] = ur[0]/ur_mag
                 d[1] = ur[1]/ur_mag
 
-        time += dt
+        time += dt_scaled
 
     thrust = 0
     root.after(dt_ms, update_position)
@@ -239,7 +261,7 @@ def redraw():
         planet_images[i].set_data([x],[y])
 
     canvas.draw()
-    root.after(15, redraw)
+    root.after(dt_ms, redraw)
 
 
 def lock_d(event):
@@ -249,8 +271,6 @@ def lock_d(event):
     else: direction_locked_label.config(text="")
 
 
-THRUST_MAG = 50
-STRONG_THRUST_MAG = 5*THRUST_MAG
 def thrust_forwards(event):
     global thrust 
     if thrust < 0: thrust = 0
@@ -310,9 +330,10 @@ def zoom(event:tk.Event):
         a = 1/SINGLE_SCALING
         k_scaling += 1
 
+    s = SINGLE_SCALING**k_scaling
     for i in range(len(planet_images)): 
-        planet_images[i].set_markersize(marker_size(planets[i].mass/2500 * SINGLE_SCALING**k_scaling))
-    sun.set_markersize(marker_size(MS/50000 * SINGLE_SCALING**k_scaling))
+        planet_images[i].set_markersize(marker_size(planets[i].mass/2500 * s))
+    sun.set_markersize(marker_size(MS/50000 * s))
 
     xl0, xh0, yl0, yh0 = xl, xh, yl, yh
 
@@ -323,6 +344,31 @@ def zoom(event:tk.Event):
 
     ax.set_xlim(xl,xh)
     ax.set_ylim(yl,yh)
+
+
+def enable_tracking(event:tk.Event)->None:
+    global track_planet
+    track_planet = not track_planet
+
+
+def track():
+    global track_planet, tracked_planet_id
+    global xl, xh, yl, yh, ax, paused
+
+    if not paused and track_planet==True and tracked_planet_id!=-1:
+        prev_position = planets[tracked_planet_id].position(time)
+        new_position = planets[tracked_planet_id].position(time-dt)
+        dr = [new_position[0]-prev_position[0], new_position[1]-prev_position[1]]
+
+        xl -= dr[0]
+        xh -= dr[0]
+        yl -= dr[1]
+        yh -= dr[1]
+
+        ax.set_xlim(xl,xh)
+        ax.set_ylim(yl,yh)
+
+    root.after(dt_ms, track)
 
 
 canvas_widget = canvas.get_tk_widget()
@@ -340,6 +386,7 @@ canvas_widget.bind("<MouseWheel>",zoom)
 canvas_widget.bind("<l>",lock_d)
 
 canvas_widget.bind("<p>",pause)
+canvas_widget.bind("<t>", enable_tracking)
 canvas_widget.bind("<.>", speedup_time)
 canvas_widget.bind("<,>", slowdown_time)
 
@@ -361,7 +408,7 @@ reset_button.pack()
 
 update_position()
 redraw()
-
+track()
 
 def main():
     global root
