@@ -255,50 +255,53 @@ def update_position():
     root.after(dt_ms, update_position)
 
 
-PREDICTED_PERIOD = 4
+PREDICTED_PERIOD = 3
 DRAW_EVERY_NTH_TRAJECTORY_POINT = 5
+trajectory_visible = False
+
 def predict_trajectory():
-    global time, r, dt_s, trajectory
+    global time, r, dt_s, trajectory, trajectory_visible
 
     trajectory = [[],[]]
 
-    tt = time
-    dtt = dt_s
-    tt_end = time + PREDICTED_PERIOD
-    rr = r.copy()
-    uu = u.copy()
+    if trajectory_visible:
+        tt = time
+        dtt = dt_s
+        tt_end = time + PREDICTED_PERIOD
+        rr = r.copy()
+        uu = u.copy()
 
-    j = 0
-    while tt<tt_end:
-        k = G_MS*(rr[0]*rr[0] + rr[1]*rr[1])**(-1.5)
-        a_sun = [-k*rr[0], -k*rr[1]]
+        j = 0
+        while tt<tt_end:
+            k = G_MS*(rr[0]*rr[0] + rr[1]*rr[1])**(-1.5)
+            a_sun = [-k*rr[0], -k*rr[1]]
 
-        smallest_dist_from_planet_squared = -1.0
-        closest_planet_id = -1
-        for i in range(len(planets)):
-            planet_position = planets[i].position(tt)
-            dist_from_planet_squared = vec_mag2([rr[0]-planet_position[0], rr[1]-planet_position[1]])
-            if dist_from_planet_squared<smallest_dist_from_planet_squared or smallest_dist_from_planet_squared==-1.0:
-                closest_planet_id = i
-                smallest_dist_from_planet_squared = dist_from_planet_squared
+            smallest_dist_from_planet_squared = -1.0
+            closest_planet_id = -1
+            for i in range(len(planets)):
+                planet_position = planets[i].position(tt)
+                dist_from_planet_squared = vec_mag2([rr[0]-planet_position[0], rr[1]-planet_position[1]])
+                if dist_from_planet_squared<smallest_dist_from_planet_squared or smallest_dist_from_planet_squared==-1.0:
+                    closest_planet_id = i
+                    smallest_dist_from_planet_squared = dist_from_planet_squared
 
-        p_position = planets[closest_planet_id].position(tt)
-        r_planet = [rr[0] - p_position[0], rr[1] - p_position[1]]
-        k = G*planets[closest_planet_id].mass*smallest_dist_from_planet_squared**(-1.5)
-        a = [-k*r_planet[0], -k*r_planet[1]]
+            p_position = planets[closest_planet_id].position(tt)
+            r_planet = [rr[0] - p_position[0], rr[1] - p_position[1]]
+            k = G*planets[closest_planet_id].mass*smallest_dist_from_planet_squared**(-1.5)
+            a = [-k*r_planet[0], -k*r_planet[1]]
 
-        tt += dtt
-        j += 1
+            tt += dtt
+            j += 1
 
-        uu[0] += (a[0] + a_sun[0])*dtt
-        uu[1] += (a[1] + a_sun[1])*dtt
+            uu[0] += (a[0] + a_sun[0])*dtt
+            uu[1] += (a[1] + a_sun[1])*dtt
 
-        rr[0] += uu[0]*dtt
-        rr[1] += uu[1]*dtt
+            rr[0] += uu[0]*dtt
+            rr[1] += uu[1]*dtt
 
-        if j%DRAW_EVERY_NTH_TRAJECTORY_POINT==0:
-            trajectory[0].append(rr[0])
-            trajectory[1].append(rr[1])
+            if j%DRAW_EVERY_NTH_TRAJECTORY_POINT==0:
+                trajectory[0].append(rr[0])
+                trajectory[1].append(rr[1])
 
     trajectory_image.set_data(*trajectory)
 
@@ -411,6 +414,11 @@ def zoom(event:tk.Event):
     ax.set_ylim(yl,yh)
 
 
+def show_trajectory(event:tk.Event)->None:
+    global trajectory_visible
+    trajectory_visible = not trajectory_visible
+
+
 def enable_tracking(event:tk.Event)->None:
     global track_planet
     track_planet = not track_planet
@@ -456,6 +464,8 @@ canvas_widget.bind("<t>", enable_tracking)
 canvas_widget.bind("<.>", speedup_time)
 canvas_widget.bind("<,>", slowdown_time)
 
+canvas_widget.bind("<r>", show_trajectory)
+
 
 
 def reset():
@@ -477,6 +487,12 @@ redraw()
 track()
 predict_trajectory()
 
+
 def main():
     global root
     root.mainloop()
+
+
+if __name__=="__main__":
+    main()
+
