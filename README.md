@@ -12,6 +12,34 @@ You can then leave the blue planet's orbit and try to reach it's neighbours, usi
 
 <img src=./assets/going_to_other_planets.png width="400">
 
-To make your maneuvering less stressful, you can slow down the time. To avoid long boring waiting (and possibly need to go into a stasis chamber, if you have one), you can speed up the time. 
+To make the navigation easier, you can switch between a static vessel orientation (indicated by the thin red line) and the automatic turning of the vessel into the direction of it's movement, relative to the body having the strongest influence on the vessel. You can also make the camera to follow the orbited planets.
 
 <img src=./assets/navigation_and_tracking.gif width="400">
+
+
+To make your maneuvering less stressful, you can slow down the time and do the burn more precisely. To avoid long and boring waiting (and possibly need to go into a stasis chamber, if you have one), you can speed up the time.  
+
+<img src=./assets/speeding_up_time.gif width="400">
+
+## Controls 
+
+| Key/mouse button | Function |
+|-----|----|
+| Mouse wheel | Zoom in/out |
+|
+| Up arrow | Thrust forwards |
+| Down arrow | Thrust backwards |
+| Shift + up arrow | **10×** thrust forwards |
+| Shift + down arrow | **10×** thrust backwards |
+| Ctrl + up arrow | **0.1×** thrust forwards |
+| Ctrl + down arrow | **0.1×** thrust backwards |
+| Right arrow | Turn right |
+| Left arrow | Turn left |
+| L | Automatically orient vessel into flight direction |
+|
+| P | Pause/resume |
+| , | Slow down time 2×|
+| . | Speed up time 2× |
+| 
+| R | Show/hide trajectory |
+
