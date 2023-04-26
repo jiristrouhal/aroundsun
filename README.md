@@ -21,7 +21,7 @@ To make your maneuvering less stressful, you can slow down the time and do the b
 
 <img src=./assets/speeding_up_time.gif width="400">
 
-## Controls 
+## Controls  
 
 | Key/mouse button | Function |
 |-----|----|
