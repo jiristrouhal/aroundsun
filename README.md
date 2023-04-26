@@ -40,3 +40,17 @@ To make your maneuvering less stressful, you can slow down the time and do the b
 | . | Speed up time 2× |
 | R | Show/hide trajectory |
 
+
+## Starting the game
+Run the *around_sun.py* via you python interpreter (originally developed with Python 3.10.)
+
+## How to contribute
+Some ideas, what to add, are
+- more planets, of course;
+- moons;
+- saving/loading the game;
+- missions, e.g. getting from planet to planet using the least amount of fuel (or time?)
+- ...
+
+## Licence
+You are free to use or modify the code under the [MIT licence](./LICENCE).
