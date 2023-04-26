@@ -1,6 +1,6 @@
 # AroundSun
 
-A little game for anyone, who want's to try to navigate a vessel through a simple solar system.
+A little game for anyone, who wants to try to navigate a vessel through a simple solar system.
 
 
 ## Description
@@ -8,11 +8,11 @@ You control a red spaceship, that is able to move among four planets, orbiting a
 
 <img src=./assets/start.png width="300">
 
-You can then leave the blue planet's orbit and try to reach it's neighbours, using tools like showing the trajectory, you are going to take to your destination.
+You can then leave the blue planet's orbit and try to reach its neighbours, using tools like showing the trajectory, you are going to take to your destination.
 
 <img src=./assets/going_to_other_planets.png width="400">
 
-To make the navigation easier, you can switch between a static vessel orientation (indicated by the thin red line) and the automatic turning of the vessel into the direction of it's movement, relative to the body having the strongest influence on the vessel. You can also make the camera to follow the orbited planets.
+To make the navigation easier, you can switch between a static vessel orientation (indicated by the thin red line) and the automatic turning of the vessel into the direction of its movement, relative to the body having the strongest influence on the vessel. You can also make the camera to follow the orbited planets.
 
 <img src=./assets/navigation_and_tracking.gif width="400">
 
