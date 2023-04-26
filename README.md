@@ -26,12 +26,12 @@ To make your maneuvering less stressful, you can slow down the time and do the b
 | Key/mouse button | Function |
 |-----|----|
 | Mouse wheel | Zoom in/out |
-| Up arrow | Thrust forwards |
-| Down arrow | Thrust backwards |
-| Shift + up arrow | **10×** thrust forwards |
-| Shift + down arrow | **10×** thrust backwards |
-| Ctrl + up arrow | **0.1×** thrust forwards |
-| Ctrl + down arrow | **0.1×** thrust backwards |
+| Up arrow | Accelerate forwards |
+| Down arrow | Accelerate backwards |
+| Shift + up arrow | Accelerate forwards (**10×** thrust) |
+| Shift + down arrow | Accelerate backwards (**10×** thrust) |
+| Ctrl + up arrow | Accelerate forwards (**0.1×** thrust) |
+| Ctrl + down arrow | Accelerate backwards (**0.1×** thrust) |
 | Right arrow | Turn right |
 | Left arrow | Turn left |
 | L | Automatically orient vessel into flight direction |
