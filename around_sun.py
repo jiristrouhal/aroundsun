@@ -268,6 +268,7 @@ def predict_trajectory():
         tt = time
         dtt = dt_s
         tt_end = time + PREDICTED_PERIOD
+        
         rr = r.copy()
         uu = u.copy()
 
