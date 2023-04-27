@@ -39,6 +39,7 @@ To make your maneuvering less stressful, you can slow down the time and do the b
 | , | Slow down time 2×|
 | . | Speed up time 2× |
 | R | Show/hide trajectory |
+| T | Move view with the orbited planet |
 
 
 ## Starting the game
